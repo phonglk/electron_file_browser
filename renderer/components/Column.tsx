@@ -10,6 +10,10 @@ export default function Column(props: {
   const [currentDirents, setCurrentDirents] = useState([]);
 
   useEffect(() => {
+    if (!paths) {
+      setCurrentDirents([]);
+      return;
+    }
     readDir(paths, [filterHiddenFile])
       .then(({ ents, paths: resolvedPaths }) => {
         if (!areEqualPaths(paths, resolvedPaths)) {
@@ -22,7 +26,7 @@ export default function Column(props: {
       });
   }, [paths]);
 
-  console.log(currentDirents);
+  // if (!paths) return null;
 
   const handleEntClick = (ent: Dirent) => (event) => {
     const newPaths = paths.concat(ent.name);
@@ -32,7 +36,9 @@ export default function Column(props: {
   return (
     <div className="flex flex-col flex-grow">
       {currentDirents.map((dirent) => (
-        <div onClick={handleEntClick(dirent)}>{dirent.name}</div>
+        <div key={dirent.name} onClick={handleEntClick(dirent)}>
+          {dirent.name}
+        </div>
       ))}
     </div>
   );
