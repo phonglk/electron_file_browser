@@ -32,3 +32,5 @@ export const areEqualPaths = (paths1: string[], paths2: string[]) =>
 
 export const upLevel = (paths: string[], level = 1) =>
   paths.slice(0, Math.max(1, paths.length - level));
+
+export const getLastLevel = (paths: string[]) => paths.slice(-1)[0];

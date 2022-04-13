@@ -41,10 +41,22 @@ function Home() {
       <Head>
         <title>File Explorer with Electron!</title>
       </Head>
-      <div className="flex flex-row">
-        <Column paths={columnPaths[0]} handleNavigate={handleColumnNavigate} />
-        <Column paths={columnPaths[1]} handleNavigate={handleColumnNavigate} />
-        <Column paths={columnPaths[2]} handleNavigate={handleColumnNavigate} />
+      <div className="flex flex-row h-full">
+        <Column
+          paths={columnPaths[0]}
+          currentPaths={currentPaths}
+          handleNavigate={handleColumnNavigate}
+        />
+        <Column
+          paths={columnPaths[1]}
+          currentPaths={currentPaths}
+          handleNavigate={handleColumnNavigate}
+        />
+        <Column
+          paths={columnPaths[2]}
+          currentPaths={currentPaths}
+          handleNavigate={handleColumnNavigate}
+        />
       </div>
     </React.Fragment>
   );

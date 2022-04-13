@@ -1,12 +1,19 @@
 import { Dirent } from 'fs';
 import React, { useEffect, useState } from 'react';
-import { areEqualPaths, filterHiddenFile, readDir } from '../utils/fileUtils';
+import {
+  areEqualPaths,
+  filterHiddenFile,
+  getLastLevel,
+  readDir,
+} from '../utils/fileUtils';
+import DirectoryEntity from './DirectoryEntity';
 
 export default function Column(props: {
   paths: string[];
+  currentPaths: string[];
   handleNavigate: (paths: string[], ent?: Dirent) => void;
 }) {
-  const { paths, handleNavigate } = props;
+  const { paths, handleNavigate, currentPaths } = props;
   const [currentDirents, setCurrentDirents] = useState([]);
 
   useEffect(() => {
@@ -33,12 +40,18 @@ export default function Column(props: {
     handleNavigate(newPaths, ent);
   };
 
+  const lastLevel = getLastLevel(currentPaths);
+
   return (
-    <div className="flex flex-col flex-grow">
+    <div className="flex flex-col flex-1 h-full p-2 overflow-auto">
       {currentDirents.map((dirent) => (
-        <div key={dirent.name} onClick={handleEntClick(dirent)}>
-          {dirent.name}
-        </div>
+        <DirectoryEntity
+          key={dirent.name}
+          dirent={dirent}
+          onClick={handleEntClick(dirent)}
+          isSelected={dirent.name === lastLevel}
+          isHovering={false}
+        />
       ))}
     </div>
   );
