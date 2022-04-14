@@ -1,7 +1,12 @@
 import path from 'path';
 import { promises as fs } from 'fs';
+import { DirectoryEntity } from './DirectoryEntity';
 
 export default class Path extends String {
+  public next: Path = null;
+  public prev: Path = null;
+  public entity: DirectoryEntity = null;
+
   getLastLevel() {
     return path.basename(this.toString());
   }

@@ -1,4 +1,4 @@
-import { Stats } from 'fs';
+import { constants, Stats } from 'fs';
 import { Dirent, promises as fs, PathLike } from 'fs-extra';
 import Path from './Path';
 
@@ -24,11 +24,16 @@ export abstract class DirectoryEntity {
 
   public static async read(path: Path) {
     try {
+      const access = await fs.access(path.toString(), constants.R_OK);
       const stats = await fs.lstat(path.toString());
       const initWrapper = async (entity: DirectoryEntity) => {
         await entity.init(stats);
         return entity;
       };
+      if (path.includes('agentx')) {
+        debugger;
+        console.log(stats);
+      }
 
       switch (true) {
         case stats.isSymbolicLink():

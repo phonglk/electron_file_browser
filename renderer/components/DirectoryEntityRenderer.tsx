@@ -7,8 +7,11 @@ import {
   DirectoryEntity,
   FileEntity,
   FolderEntity,
+  ReadErrorEntity,
   SymlinkEntity,
 } from '../utils/DirectoryEntity';
+import BrowsingContext from '../utils/BrowsingContext';
+import Path from '../utils/Path';
 
 const iconClasses = 'inline-block w-4 h-4 mr-1';
 
@@ -28,28 +31,40 @@ const getIcon = (entity: DirectoryEntity, isSelected: boolean): ReactNode => {
 export default function DirectoryEntityRenderer(props: {
   entity: DirectoryEntity;
   isSelected: boolean;
-  isHovering: boolean;
   onClick: MouseEventHandler;
 }) {
-  const { entity, isSelected, isHovering, onClick } = props;
+  const { entity, isSelected, onClick } = props;
 
   let symbolicLink = null;
-
   if (entity instanceof SymlinkEntity) {
     symbolicLink = <LinkIcon className="inline-block w-4 h-4 ml-1" />;
   }
 
   return (
-    <div
-      onClick={onClick}
-      className={classNames(
-        'p-1 flex content-center items-center',
-        isSelected ? 'bg-blue-200 rounded-lg' : ''
-      )}
-    >
-      <div>{getIcon(entity, isSelected)}</div>
-      <div>{entity.getName()}</div>
-      <div>{symbolicLink}</div>
-    </div>
+    <BrowsingContext.Consumer>
+      {({ setCurrentHoverItem, currentHoverItem }) => {
+        const isHovering =
+          currentHoverItem?.toString() === entity.getPath().toString();
+        return (
+          <div
+            onClick={onClick}
+            className={classNames(
+              'my-0.5 rounded-lg p-1 flex content-center items-center transition-all',
+              {
+                'bg-blue-200 ': isSelected,
+                'bg-gray-200': isHovering,
+                'bg-blue-300': isSelected && isHovering,
+                'text-red-600': entity instanceof ReadErrorEntity,
+              }
+            )}
+            onMouseOver={() => setCurrentHoverItem(entity.getPath())}
+          >
+            <div>{getIcon(entity, isSelected)}</div>
+            <div>{entity.getName()}</div>
+            <div>{symbolicLink}</div>
+          </div>
+        );
+      }}
+    </BrowsingContext.Consumer>
   );
 }

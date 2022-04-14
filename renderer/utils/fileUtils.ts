@@ -37,3 +37,31 @@ export const sortByFileEntity = (entities: DirectoryEntity[]) =>
       return 1;
     return 0;
   });
+
+export async function getEntitiesFromPath(
+  path: Path
+): Promise<DirectoryEntity[]> {
+  return DirectoryEntity.read(path).then((entity) => {
+    if (!(entity instanceof FolderEntity)) {
+      alert('Not support this type of entity');
+      return [];
+    }
+
+    return entity
+      .getEntities([filterHiddenEntities, sortByFileEntity])
+      .then(linkUpPathInEntities);
+  });
+}
+
+function linkUpPathInEntities(entities: DirectoryEntity[]) {
+  for (let i = 0; i < entities.length; i++) {
+    const cur = entities[i].getPath();
+    const prev = entities[i - 1]?.getPath();
+    const next = entities[i + 1]?.getPath();
+    cur.next = next;
+    cur.prev = prev;
+    cur.entity = entities[i];
+  }
+
+  return entities;
+}

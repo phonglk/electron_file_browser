@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^1.0.6",
+    "@types/lodash": "^4.14.181",
     "classnames": "^2.3.1",
     "electron-serve": "^1.1.0",
     "electron-store": "^8.0.1",
