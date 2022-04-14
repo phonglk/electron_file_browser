@@ -1,55 +1,49 @@
 import { Dirent } from 'fs';
 import React, { useEffect, useState } from 'react';
-import {
-  areEqualPaths,
-  filterHiddenFile,
-  getLastLevel,
-  readDir,
-} from '../utils/fileUtils';
-import DirectoryEntity from './DirectoryEntity';
+import { DirectoryEntity, FolderEntity } from '../utils/DirectoryEntity';
+import { filterHiddenEntities, sortByFileEntity } from '../utils/fileUtils';
+import Path from '../utils/Path';
+import DirectoryEntityRenderer from './DirectoryEntityRenderer';
 
 export default function Column(props: {
-  paths: string[];
-  currentPaths: string[];
-  handleNavigate: (paths: string[], ent?: Dirent) => void;
+  path: Path;
+  currentPath: Path;
+  handleNavigate: (entity: DirectoryEntity) => void;
 }) {
-  const { paths, handleNavigate, currentPaths } = props;
-  const [currentDirents, setCurrentDirents] = useState([]);
+  const { path, handleNavigate, currentPath } = props;
+  const [currentEntities, setCurrentEntities] = useState<DirectoryEntity[]>([]);
 
   useEffect(() => {
-    if (!paths) {
-      setCurrentDirents([]);
+    if (!path) {
+      setCurrentEntities([]);
       return;
     }
-    readDir(paths, [filterHiddenFile])
-      .then(({ ents, paths: resolvedPaths }) => {
-        if (!areEqualPaths(paths, resolvedPaths)) {
-          return handleNavigate(resolvedPaths);
+    DirectoryEntity.read(path)
+      .then((entity) => {
+        if (!(entity instanceof FolderEntity)) {
+          alert('Not support this type of enity');
+          return;
         }
-        setCurrentDirents(ents);
+
+        return entity
+          .getEntities([filterHiddenEntities, sortByFileEntity])
+          .then((entities) => {
+            setCurrentEntities(entities);
+          });
       })
-      .catch((e) => {
-        alert(e);
+      .catch((error) => {
+        alert(`Error while reading "${path}": ${error.message}`);
       });
-  }, [paths]);
-
-  // if (!paths) return null;
-
-  const handleEntClick = (ent: Dirent) => (event) => {
-    const newPaths = paths.concat(ent.name);
-    handleNavigate(newPaths, ent);
-  };
-
-  const lastLevel = getLastLevel(currentPaths);
+  }, [path]);
 
   return (
     <div className="flex flex-col flex-1 h-full p-2 overflow-auto">
-      {currentDirents.map((dirent) => (
-        <DirectoryEntity
-          key={dirent.name}
-          dirent={dirent}
-          onClick={handleEntClick(dirent)}
-          isSelected={dirent.name === lastLevel}
+      {currentEntities.map((entity) => (
+        <DirectoryEntityRenderer
+          key={entity.getPath().toString()}
+          entity={entity}
+          onClick={handleNavigate.bind(null, entity)}
+          isSelected={currentPath.includesPath(entity.getPath())}
           isHovering={false}
         />
       ))}

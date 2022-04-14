@@ -1,36 +1,39 @@
 import fs, { Dirent } from 'fs-extra';
 import path from 'path';
+import { DirectoryEntity, FileEntity, FolderEntity } from './DirectoryEntity';
+import Path from './Path';
 
 /** This probably depends on system, default to '/' for now */
 export function getRoot() {
   return process.env.DEFAULT_ROOT ?? '/';
 }
 
-export async function readDir(
-  paths: string[],
-  filters: Array<(dirent: Dirent) => boolean> = []
-): Promise<{ ents: Dirent[]; paths: string[] }> {
-  const fullPath = path.join(...paths);
-  const realPath = await fs.realpath(fullPath);
-  const realPaths = ['/']
-    .concat(realPath.split('/').slice(1))
-    .filter((s) => s.length > 0);
+export function getPathPerColumn(path: Path, num = 3) {
+  if (!path) return [];
+  const paths = [path];
+  for (let i = 1; i < num; i++) {
+    const up = paths[0].upLevel();
+    if (up.toString() === paths[0].toString()) continue;
+    paths.unshift(up);
+  }
 
-  const dirents = await fs.readdir(fullPath, { withFileTypes: true });
-  const filteredEnts = dirents.filter((dirent) =>
-    filters.every((f) => f(dirent))
-  );
-
-  return { ents: filteredEnts, paths: realPaths };
+  return paths;
 }
 
-export const filterHiddenFile = (dirent: Dirent) =>
-  !dirent.name.startsWith('.');
+export const filterHiddenEntities = (entities: DirectoryEntity[]) =>
+  entities.filter((entity) => !entity.getName().startsWith('.'));
 
-export const areEqualPaths = (paths1: string[], paths2: string[]) =>
-  paths1.join('/') === paths2.join('/');
-
-export const upLevel = (paths: string[], level = 1) =>
-  paths.slice(0, Math.max(1, paths.length - level));
-
-export const getLastLevel = (paths: string[]) => paths.slice(-1)[0];
+export const sortByFileEntity = (entities: DirectoryEntity[]) =>
+  entities.sort((e1, e2) => {
+    if (
+      !(e1.resolvedEntity instanceof FileEntity) &&
+      e2.resolvedEntity instanceof FileEntity
+    )
+      return -1;
+    if (
+      e1.resolvedEntity instanceof FileEntity &&
+      !(e2.resolvedEntity instanceof FileEntity)
+    )
+      return 1;
+    return 0;
+  });
