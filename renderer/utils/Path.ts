@@ -23,6 +23,12 @@ export default class Path extends String {
     return new Path(await fs.realpath(this.toString()));
   }
 
+  isSame(path: Path) {
+    return (
+      this.toString().replace(/\/$/, '') === path.toString().replace(/\/$/, '')
+    );
+  }
+
   // To check path is part of current path
   // e.g: new Path('/A/B/C').includesPath(new Path('/A/B')) => true
   includesPath(path: Path) {

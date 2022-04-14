@@ -33,7 +33,7 @@ function Home() {
       entities: DirectoryEntity[];
     }[]
   >([]);
-  const hoveringEntity = useRef(null);
+  const ref = useRef(null);
 
   const handleColumnNavigate = (entity: DirectoryEntity) => {
     if (entity instanceof FolderEntity) return setCurrentPath(entity.getPath());
@@ -46,24 +46,38 @@ function Home() {
     return alert('Cannot handle navigation: Unknown type');
   };
 
-  // Closure hell
-  hoveringEntity.current = currentHoverItem?.entity;
+  // To workaround closure hell
+  ref.current = {
+    hoveringEntity: currentHoverItem?.entity,
+    currentPath,
+    columnsConfig,
+  };
 
   useEffect(() => {
     setCurrentPath(new Path(getRoot()));
 
     Mousetrap.bind('left', () => {
+      // cursor in the third column
+      if (
+        ref.current.columnsConfig[2].entities.includes(
+          ref.current.hoveringEntity
+        )
+      ) {
+        setCurrentHoverItem(ref.current.currentPath);
+        return;
+      }
+
       setCurrentPath((path) => path.upLevel());
     });
     Mousetrap.bind('up', () => {
-      setCurrentHoverItem((cur) => cur.prev ?? cur);
+      setCurrentHoverItem((cur) => cur?.prev ?? cur);
     });
     Mousetrap.bind('down', () => {
-      setCurrentHoverItem((cur) => cur.next ?? cur);
+      setCurrentHoverItem((cur) => cur?.next ?? cur);
     });
     Mousetrap.bind(['right', 'enter'], () => {
-      if (!hoveringEntity.current) return;
-      handleColumnNavigate(hoveringEntity.current);
+      if (!ref.current.hoveringEntity) return;
+      handleColumnNavigate(ref.current.hoveringEntity);
     });
   }, []);
 
@@ -85,8 +99,24 @@ function Home() {
 
   useEffect(() => {
     if (!columnsConfig.length) return;
-    setCurrentHoverItem(_.last(columnsConfig).entities[0]?.getPath());
-  }, [columnsConfig]);
+
+    // Auto select the first item in selected folder, if the folder is empty
+    // then fallback to current selection
+    const firstEntity = _.last(columnsConfig).entities[0];
+    if (firstEntity) {
+      setCurrentHoverItem(firstEntity.getPath());
+    } else {
+      setCurrentHoverItem(currentPath);
+    }
+
+    if (!currentPath.entity) {
+      const found = _.flatten(
+        columnsConfig.map((config) => config.entities)
+      ).find((entity) => entity.getPath().isSame(currentPath));
+      found && setCurrentPath(found.getPath());
+      if (!found) debugger;
+    }
+  }, [columnsConfig, currentPath]);
 
   const paths = useMemo(() => getPathPerColumn(currentPath), [currentPath]);
   return (
