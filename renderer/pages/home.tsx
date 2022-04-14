@@ -57,13 +57,15 @@ function Home() {
     setCurrentPath(new Path(getRoot()));
 
     Mousetrap.bind('left', () => {
-      // cursor in the third column
+      const { columnsConfig, hoveringEntity, currentPath } = ref.current;
+      // cursor in the last column
       if (
-        ref.current.columnsConfig[2].entities.includes(
-          ref.current.hoveringEntity
+        columnsConfig.length > 1 &&
+        (_.last(columnsConfig) as FolderEntity).entities.includes(
+          hoveringEntity
         )
       ) {
-        setCurrentHoverItem(ref.current.currentPath);
+        setCurrentHoverItem(currentPath);
         return;
       }
 
@@ -114,7 +116,6 @@ function Home() {
         columnsConfig.map((config) => config.entities)
       ).find((entity) => entity.getPath().isSame(currentPath));
       found && setCurrentPath(found.getPath());
-      if (!found) debugger;
     }
   }, [columnsConfig, currentPath]);
 
