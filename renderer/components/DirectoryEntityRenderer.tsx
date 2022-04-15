@@ -1,5 +1,4 @@
-import { Dirent } from 'fs';
-import React, { MouseEventHandler, ReactNode } from 'react';
+import React, { MouseEventHandler, ReactNode, useContext } from 'react';
 import { FolderIcon, FolderOpenIcon, XIcon } from '@heroicons/react/solid';
 import { DocumentIcon, LinkIcon } from '@heroicons/react/outline';
 import classNames from 'classnames';
@@ -10,8 +9,7 @@ import {
   ReadErrorEntity,
   SymlinkEntity,
 } from '../utils/DirectoryEntity';
-import BrowsingContext from '../utils/BrowsingContext';
-import Path from '../utils/Path';
+import { ActionType, StateContext } from '../utils/reducerUtils';
 
 const iconClasses = 'inline-block w-4 h-4 mr-1';
 
@@ -34,37 +32,36 @@ export default function DirectoryEntityRenderer(props: {
   onClick: MouseEventHandler;
 }) {
   const { entity, isSelected, onClick } = props;
+  const { dispatch, state } = useContext(StateContext);
 
   let symbolicLink = null;
   if (entity instanceof SymlinkEntity) {
     symbolicLink = <LinkIcon className="inline-block w-4 h-4 ml-1" />;
   }
 
+  const isHovering =
+    state.hoveringEntity?.getPath().toString() === entity.getPath().toString();
+
+  const handleMouseOver = () =>
+    dispatch({ type: ActionType.SET_HOVERING_ENTITY, payload: entity });
+
   return (
-    <BrowsingContext.Consumer>
-      {({ setCurrentHoverItem, currentHoverItem }) => {
-        const isHovering =
-          currentHoverItem?.toString() === entity.getPath().toString();
-        return (
-          <div
-            onClick={onClick}
-            className={classNames(
-              'my-0.5 rounded-lg p-1 flex content-center items-center transition-all',
-              {
-                'bg-blue-200 ': isSelected,
-                'bg-gray-200': isHovering,
-                'bg-blue-300': isSelected && isHovering,
-                'text-red-600': entity instanceof ReadErrorEntity,
-              }
-            )}
-            onMouseOver={() => setCurrentHoverItem(entity.getPath())}
-          >
-            <div>{getIcon(entity, isSelected)}</div>
-            <div>{entity.getName()}</div>
-            <div>{symbolicLink}</div>
-          </div>
-        );
-      }}
-    </BrowsingContext.Consumer>
+    <div
+      onClick={onClick}
+      className={classNames(
+        'my-0.5 rounded-lg p-1 flex content-center items-center transition-all',
+        {
+          'bg-blue-200 ': isSelected,
+          'bg-gray-200': isHovering,
+          'bg-blue-300': isSelected && isHovering,
+          'text-red-600': entity instanceof ReadErrorEntity,
+        }
+      )}
+      onMouseOver={handleMouseOver}
+    >
+      <div>{getIcon(entity, isSelected)}</div>
+      <div>{entity.getName()}</div>
+      <div>{symbolicLink}</div>
+    </div>
   );
 }

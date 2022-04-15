@@ -1,11 +1,16 @@
-import fs, { Dirent } from 'fs-extra';
-import path from 'path';
+import _ from 'lodash';
 import { DirectoryEntity, FileEntity, FolderEntity } from './DirectoryEntity';
 import Path from './Path';
+import { State } from './reducerUtils';
 
 /** This probably depends on system, default to '/' for now */
 export function getRoot() {
   return process.env.DEFAULT_ROOT ?? '/';
+}
+
+export function log(...msgs: any[]) {
+  if (!process.env.DEBUG) return;
+  console.log(...msgs);
 }
 
 export function getPathPerColumn(path: Path, num = 3) {
@@ -52,6 +57,24 @@ export async function getEntitiesFromPath(
       .then(linkUpPathInEntities);
   });
 }
+
+export async function getColumnsConfig(path: Path) {
+  const paths = getPathPerColumn(path);
+  const entitiesPerColumn = await Promise.all(paths.map(getEntitiesFromPath));
+  const columnsConfig = entitiesPerColumn.map((entities, i) => ({
+    entities,
+    path: paths[i],
+  }));
+  return columnsConfig;
+}
+
+export const findEntityInConfig = (
+  path: Path,
+  columnsConfig: State['columnsConfig']
+) =>
+  _.flatten(columnsConfig.map((config) => config.entities)).find((entity) =>
+    entity.getPath().isSame(path)
+  );
 
 function linkUpPathInEntities(entities: DirectoryEntity[]) {
   for (let i = 0; i < entities.length; i++) {

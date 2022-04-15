@@ -1,125 +1,50 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useReducer } from 'react';
 import Head from 'next/head';
 import Mousetrap from 'mousetrap';
 import _ from 'lodash';
-import {
-  getEntitiesFromPath,
-  getPathPerColumn,
-  getRoot,
-} from '../utils/fileUtils';
+import { getColumnsConfig, getRoot } from '../utils';
 import Column from '../components/Column';
-import {
-  DirectoryEntity,
-  FileEntity,
-  FolderEntity,
-  ReadErrorEntity,
-  SymlinkEntity,
-} from '../utils/DirectoryEntity';
 import Path from '../utils/Path';
-import BrowsingContext from '../utils/BrowsingContext';
+import { ActionType, State, StateContext } from '../utils/reducerUtils';
+import reducer from '../reducer';
+
+const defaultState: State = {
+  currentPath: null,
+  hoveringEntity: null,
+  columnsConfig: [],
+};
 
 function Home() {
-  const [currentPath, setCurrentPath] = useState<Path>(null);
-  const [currentHoverItem, setCurrentHoverItem] = useState<Path>(null);
-  const [columnsConfig, setColumnsConfig] = useState<
-    {
-      path: Path;
-      entities: DirectoryEntity[];
-    }[]
-  >([]);
-  const ref = useRef(null);
-
-  const handleColumnNavigate = (entity: DirectoryEntity) => {
-    if (entity instanceof FolderEntity) return setCurrentPath(entity.getPath());
-    if (entity instanceof SymlinkEntity)
-      return handleColumnNavigate(entity.resolvedEntity);
-    if (entity instanceof FileEntity) return alert('File will be implemented');
-    if (entity instanceof ReadErrorEntity)
-      return alert(`This entity has read error: ${entity.error.message}`);
-    console.log(entity);
-    return alert('Cannot handle navigation: Unknown type');
-  };
-
-  // To workaround closure hell
-  ref.current = {
-    hoveringEntity: currentHoverItem?.entity,
-    currentPath,
-    columnsConfig,
-  };
+  const [state, dispatch] = useReducer(reducer, defaultState);
+  const { currentPath, columnsConfig } = state;
 
   useEffect(() => {
-    setCurrentPath(new Path(getRoot()));
+    dispatch({
+      type: ActionType.SET_CURRENT_PATH,
+      payload: new Path(getRoot()),
+    });
 
-    Mousetrap.bind('left', () => {
-      const { columnsConfig, hoveringEntity, currentPath } = ref.current;
-      // cursor in the last column
-      if (
-        columnsConfig.length > 1 &&
-        (_.last(columnsConfig) as FolderEntity).entities.includes(
-          hoveringEntity
-        )
-      ) {
-        setCurrentHoverItem(currentPath);
-        return;
-      }
-
-      setCurrentPath((path) => path.upLevel());
-    });
-    Mousetrap.bind('up', () => {
-      setCurrentHoverItem((cur) => cur?.prev ?? cur);
-    });
-    Mousetrap.bind('down', () => {
-      setCurrentHoverItem((cur) => cur?.next ?? cur);
-    });
-    Mousetrap.bind(['right', 'enter'], () => {
-      if (!ref.current.hoveringEntity) return;
-      handleColumnNavigate(ref.current.hoveringEntity);
-    });
+    Mousetrap.bind('left', () => dispatch({ type: ActionType.KEYBOARD_LEFT }));
+    Mousetrap.bind('up', () => dispatch({ type: ActionType.KEYBOARD_UP }));
+    Mousetrap.bind('down', () => dispatch({ type: ActionType.KEYBOARD_DOWN }));
+    Mousetrap.bind(['right', 'enter'], () =>
+      dispatch({ type: ActionType.KEYBOARD_ENTER })
+    );
   }, []);
 
   useEffect(() => {
-    const paths = getPathPerColumn(currentPath);
-    Promise.all(paths.map(getEntitiesFromPath))
-      .then((entitiesPerColumn) => {
-        const columnsConfig = entitiesPerColumn.map((entities, i) => ({
-          entities,
-          path: paths[i],
-        }));
-
-        setColumnsConfig(columnsConfig);
-      })
+    getColumnsConfig(currentPath)
+      .then((columnsConfig) =>
+        dispatch({
+          type: ActionType.SET_COLUMNS_CONFIG,
+          payload: columnsConfig,
+        })
+      )
       .catch((error) => {
         alert(error.message);
       });
   }, [currentPath]);
 
-  useEffect(() => {
-    if (!columnsConfig.length) return;
-
-    // Auto select the first item in selected folder, if the folder is empty
-    // then fallback to current selection
-    const firstEntity = _.last(columnsConfig).entities[0];
-    if (firstEntity) {
-      setCurrentHoverItem(firstEntity.getPath());
-    } else {
-      setCurrentHoverItem(currentPath);
-    }
-
-    if (!currentPath.entity) {
-      const found = _.flatten(
-        columnsConfig.map((config) => config.entities)
-      ).find((entity) => entity.getPath().isSame(currentPath));
-      found && setCurrentPath(found.getPath());
-    }
-  }, [columnsConfig, currentPath]);
-
-  const paths = useMemo(() => getPathPerColumn(currentPath), [currentPath]);
   return (
     <React.Fragment>
       <Head>
@@ -129,19 +54,11 @@ function Home() {
         {currentPath === null ? (
           'Loading'
         ) : (
-          <BrowsingContext.Provider
-            value={{ setCurrentHoverItem, currentHoverItem }}
-          >
+          <StateContext.Provider value={{ state, dispatch }}>
             {columnsConfig.map(({ path, entities }) => (
-              <Column
-                key={path.toString()}
-                path={path}
-                currentPath={currentPath}
-                entities={entities}
-                handleNavigate={handleColumnNavigate}
-              />
+              <Column key={path.toString()} path={path} entities={entities} />
             ))}
-          </BrowsingContext.Provider>
+          </StateContext.Provider>
         )}
       </div>
     </React.Fragment>
