@@ -1,6 +1,8 @@
 # Eletron File Browser Demo
 ![image](https://user-images.githubusercontent.com/2889732/163595054-5d9abbcd-ee75-4dea-9b54-4f22530636b7.png)
-Video: https://user-images.githubusercontent.com/2889732/163595685-494c6883-5654-4841-bd0c-1cc213fc840c.mov
+![](https://user-images.githubusercontent.com/2889732/163596737-53bf3ef0-4df1-47ae-bdbd-46eee3a4c570.mp4)
+
+
 
 ## Features
 - Browse directories using Column layout
