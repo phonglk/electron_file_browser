@@ -37,7 +37,7 @@ DEFAULT_ROOT=/project/projectX yarn dev
 ```
 
 ##### DEBUG:
-To enable debug log. The value is nonnull, preferaly "1" or "TRUE"
+To enable debug log. The value is nonnull, preferably "1" or "TRUE"
 
 ```
 DEBUG=1 yarn dev
