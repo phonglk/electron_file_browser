@@ -1,38 +1,51 @@
-<p align="center"><img src="https://i.imgur.com/a9QWW0v.png"></p>
+# Eletron File Browser Demo
+![image](https://user-images.githubusercontent.com/2889732/163595054-5d9abbcd-ee75-4dea-9b54-4f22530636b7.png)
 
-## Usage
+## Features
+- Browse directories using Column layout
+- Keyboard navigation
+  -  UP and Down for navigation in the column
+  -  LEFT to go back to previous folder
+  -  RIGHT or ENTER to expand the folder
+- Symlink is supported
+- Unreadable file will be marked as red
+- Files are sorted at the bottom
+- Hidden files are hidden (!)
 
-### Create an App
+## Project
 
+### Development
+
+Install dependencies
 ```
-# with npx
-$ npx create-nextron-app my-app --example with-typescript-tailwindcss
-
-# with yarn
-$ yarn create nextron-app my-app --example with-typescript-tailwindcss
-
-# with pnpx
-$ pnpx create-nextron-app my-app --example with-typescript-tailwindcss
-```
-
-### Install Dependencies
-
-```
-$ cd my-app
-
-# using yarn or npm
-$ yarn (or `npm install`)
-
-# using pnpm
-$ pnpm install --shamefully-hoist
+$ yarn
 ```
 
-### Use it
+Run development mode
+```
+$ yarn dev
+```
+#### Configuration
+There are 2 configurable options can be set via env, for development purpose
+
+##### DEFAULT_ROOT
+Root for the browser to start with, default start from "/". The value should be path to the root
+
+e.g.
+```
+DEFAULT_ROOT=/project/projectX yarn dev
+```
+
+##### DEBUG:
+To enable debug log. The value is nonnull, preferaly "1" or "TRUE"
 
 ```
-# development mode
-$ yarn dev (or `npm run dev` or `pnpm run dev`)
-
-# production build
-$ yarn build (or `npm run build` or `pnpm run build`)
+DEBUG=1 yarn dev
 ```
+### Build
+Prerequisite: Install dependencies
+
+```
+yarn build
+```
+Then find the excutable file in `/dist` folder
